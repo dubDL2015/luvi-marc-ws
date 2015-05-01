@@ -81,7 +81,7 @@ end
 
 
 local function decoder(data)
-
+  p(data)
   if not data then return end
    --start scanning after white space
   --p("in:"..data)
@@ -192,6 +192,7 @@ function exports.execute(query, options)
    }
 
   write(request)
+  
   res = read()
    if not res then error("Connection closed") end
   

@@ -1,5 +1,5 @@
 local mconnector = require('mconnector')
-local json = require('cjson')
+local jsonStringify = require('json').stringify
 
 local mclient = {}
 
@@ -9,8 +9,8 @@ local uri = { host = "127.0.0.1", port = 1254 }
 function mclient.getProperties(req, res, go)
 	local mresult = mconnector.execute("SERVER.GETPROPERTIES", uri)
 	
-	--local body = jsonStringify(mresult)
-  	local body = json.encode(mresult)
+	local body = jsonStringify(mresult)
+
   	res.headers = {
     	{ 'Content-Type', 'application/json' },
     	{ 'Content-Length', #body },

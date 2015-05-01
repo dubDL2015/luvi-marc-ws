@@ -5,7 +5,6 @@ return {
   	"luvit/require",
     "luvit/pretty-print",
     "luvit/json",
-    "dubld/cjson@1.0.0",
     "creationix/hybrid-fs@0.1.0",
   	"creationix/weblit-app@0.1.3",
   	"creationix/weblit-auto-headers@0.1.1",
