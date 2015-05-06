@@ -16,106 +16,115 @@ local strsub = string.sub
 local tonumber = tonumber
 local strlength = string.len
 
-local function _parse_result(str,current_pos)
-
-  local marcResult = { }
-  local pos = current_pos
-
-  --header
-  local s, sNbRows, sNbCols
-  s, pos, sNbRows, sNbCols = strfind(str, "(%d+)%s(%d+)%s", pos)
-
-  local nbRows = tonumber(sNbRows)
-  local nbCols = tonumber(sNbCols)
-
-  local cols = {}
-  
-
-  --columns definition
-  for i = 1, nbCols do
-
-    local typeCol, length, name
-
-    s, pos, typeCol, length, name = strfind(str, "(%d+)%s(%d+)%s([a-zA-Z0-9_]+)%s", pos)
-
-    cols[i] = { type = tonumber(typeCol), name = name }
-
-  end
-
-  local data = { }
-  --parse values e.g <2 77/> <7 icecube/>
-  for i = 1,  nbRows do
-
-    local row = {}
-
-    for j = 1, nbCols do
-      
-      local sNbByte
-      s, pos, sNbByte = strfind(str, "<(%d+)%s",pos)
-      local nbByte = tonumber(sNbByte)
-
-      local val = nil
-
-      if (nbByte>0) then
-        val = strsub(str, pos, pos+ nbByte)
-        pos = pos+nbByte
-      end
-
-      pos = pos+1 --just after value
-
-      row[cols[j].name] = val
-
-    end
-
-    data[i] = row
 
 
-  end
+local function decode_header(data, pos)
 
-  marcResult.data = data
+  local _, pos, ssessionUID, sIsOK = strfind(data, "([a-zA-Z0-9_]+)%s(%d+)%s", pos)
 
+   --initialize marc resultset
+  return {sessionUID = ssessionUID,  isOK = tonumber(sIsOK)}, pos
+end
 
-  return marcResult, pos
+local function decode_table_size(data,pos)
+    
+  local _, pos, sNbRows, sNbCols = strfind(data, "(%d+)%s(%d+)%s", pos)
+
+  return tonumber(sNbRows), tonumber(sNbCols), pos
 
 end
 
 
+
+
+local function decode_columns_header(data, pos, nb_cols)
+  --columns definition
+    local cols = {}
+  
+    for i = 1, nb_cols do
+      local  _, typeCol, length, name
+       _, pos, typeCol, length, name = strfind(data, "(%d+)%s(%d+)%s([a-zA-Z0-9_]+)%s", pos)
+
+      cols[i] = { mtype = tonumber(typeCol), name = name }
+
+    end
+
+    return cols, pos
+end
+
+local function decode_datas(data, pos, nbRows, cols)
+
+  local rs = { }
+  local sNbByte, nbByte, val, _
+  --parse values e.g <2 77/> <7 icecube/>
+  for i = 1,  nbRows do
+
+      local row = {}
+
+      for j = 1, #cols do
+
+        _, pos, sNbByte = strfind(data, "<(%d+)%s",pos)
+        nbByte = tonumber(sNbByte)
+
+        if (nbByte > 0) then
+          val = strsub(data, pos, pos + nbByte)
+          pos = pos + nbByte
+        end
+
+        pos = pos + 1 --just after value
+
+        row[cols[j].name] = val
+
+      end
+
+    rs[i] = row
+  end
+
+  return rs, pos
+end
+
+--TODO handle streaming
 local function decoder(data)
-  p(data)
+
   if not data then return end
    --start scanning after white space
   --p("in:"..data)
   local pos = strfind(data, "%s",1)
   if not pos then return end
 
-  --header
-  local ssessionUID, sIsOK, _
-  _, pos, ssessionUID, sIsOK = strfind(data, "([a-zA-Z0-9_]+)%s(%d+)%s", pos)
-  
-   --initialize marc resultset
-  local marc_rs = {sessionUID = ssessionUID,  isOK = tonumber(sIsOK)}
+  local marc_rs
 
+  marc_rs, pos = decode_header(data, pos)
+  --handle errors
   if marc_rs.isOK==0 then
    marc_rs.error_msg = data
    return marc_rs
   end
-  
+
   local resultset = { }
 
-  repeat 
-    local rs
-    rs, pos = _parse_result(data,pos)
-    tblinsert(resultset, rs)
-    --marc_rs.resultset[#marc_rs+1], pos = _parse_result(data,pos)
+  repeat
+    local rs = {}
+
+    local nb_rows, nb_cols
+    nb_rows, nb_cols, pos = decode_table_size(data, pos)
+
+    local cols
+    cols, pos = decode_columns_header(data, pos, nb_cols)
+    rs.data , pos = decode_datas(data, pos, nb_rows, cols)
+
+    resultset[#resultset + 1] = rs
+    
     pos = strfind(data,"%d", pos) --we check for other result by finding next digit (nb of rows)
   until (not pos) --until no more datas (pos is nil)
   
   marc_rs.resultset =  resultset
 
+  return marc_rs, ''
 
-
-  return marc_rs, ""
 end
+
+
   
 local function encoder(req)
     local length = 0
@@ -135,7 +144,7 @@ end
 
 local sessions = {}
 local connections = {} 
-
+--TODO limit number of connections & timeout
 local function getConnection(host, port, timeout)
 	for i = #connections, 1, -1 do
     local connection = connections[i]
@@ -167,6 +176,8 @@ local function save(connection)
 end
 
 
+
+
 function exports.execute(query, options)
   --get connection from pool
   local connection = getConnection(options.host, options.port)
@@ -188,8 +199,10 @@ function exports.execute(query, options)
   request = {
       "", --prepare place for header 
       res.sessionUID..' ',
-      query.." ( );"
+      concat(query)
    }
+
+   p(request)
 
   write(request)
   

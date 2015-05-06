@@ -1,12 +1,13 @@
 return {
-  name = "dubld/test-socket-pool",
+  name = "dubld/luvi-marc-ws",
   version = "0.0.1",
   dependencies = {
   	"luvit/require",
     "luvit/pretty-print",
     "luvit/json",
+    "luvit/querystring@1.0.0",
     "creationix/hybrid-fs@0.1.0",
-  	"creationix/weblit-app@0.1.3",
+  	"creationix/weblit-app@0.2.3",
   	"creationix/weblit-auto-headers@0.1.1",
     -- Serve static files from disk
     "creationix/weblit-static@0.3.0",
