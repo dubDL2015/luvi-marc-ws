@@ -1,4 +1,4 @@
-exports.name = "dubld/mconnector"
+exports.name = "lduboeuf/mconnector"
 exports.version = "0.0.1"
 exports.dependencies = {
   "creationix/coro-tcp@1.0.5",
