@@ -5,7 +5,7 @@ local env = require('env')
 
 --load config file
 --luvi luvi-marc-ws/ -- `pwd`/luvi-marc-ws/config.lua
-if (#args==0) then error("config file is required: luvi app -- /absolute/path/to/my/config.lua") end
+if (#args==0) then error("config file is required, usage: luvi app -- /absolute/path/to/my/config.lua\n e.g: luvi luvi-marc-ws/ -- `pwd`/luvi-marc-ws/config.lua") end
 
 local conf = require(args[1])
 if (type(conf) ~= "table") then
@@ -15,6 +15,7 @@ end
 mclient.setConfig(conf)
 
 p("load app with config:",conf)
+p("for first test: curl -L http://127.0.0.1:8080/knowledges/patent/")
 
 
 require('weblit-app')
@@ -26,13 +27,31 @@ require('weblit-app')
   .use(require('weblit-auto-headers'))
   .use(require('weblit-etag-cache'))
 
-  -- Serve non-blog content pages
-  .route({ method = "GET", path = "/knowledges/:knw_name/" }, mclient.getProperties)
-  .route({ method = "GET", path = "/knowledges/:knw_name/resources/" }, mclient.getResources)
 
   .use(static(pathJoin(module.dir, "static")))
 
+  
+
+  --[[
+    token protected area TODO
+  ]]
+  -- .use(
+  --   function (req, res, go)
+  --     local token = req.headers["M-API-TOKEN"]
+  --     if not token then
+  --       --todo proper http response
+  --       error("unauthorized")
+  --     end
+  --     go()
+
+  --   end)
+
+  .route({ method = "GET", path = "/knowledges/:knw_name/" }, mclient.getProperties)
+  .route({ method = "GET", path = "/knowledges/:knw_name/resources/" }, mclient.getResources)
+
+ 
+
   .start()
 
-  require('uv').run()
+require('uv').run()
 

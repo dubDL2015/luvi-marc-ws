@@ -2,9 +2,10 @@ return {
   name = "dubld/luvi-marc-ws",
   version = "0.0.1",
   dependencies = {
-  	"luvit/require",
+   	"luvit/require@1.2.0",
     "luvit/pretty-print",
     "luvit/json",
+    "lduboeuf/cjson@1.0.1",
     "luvit/querystring@1.0.0",
     "creationix/hybrid-fs@0.1.0",
   	"creationix/weblit-app@0.2.3",

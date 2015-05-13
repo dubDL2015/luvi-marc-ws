@@ -10,7 +10,6 @@ local connect = require('coro-tcp').connect
 local wrapper = require('coro-wrapper')
 local concat = table.concat
 local remove = table.remove
-local tblinsert = table.insert
 local strfind = string.find
 local strsub = string.sub
 local tonumber = tonumber
@@ -175,9 +174,6 @@ local function save(connection)
   connections[#connections + 1] = connection
 end
 
-
-
-
 function exports.execute(query, options)
   --get connection from pool
   local connection = getConnection(options.host, options.port)
@@ -190,10 +186,11 @@ function exports.execute(query, options)
       "CONNECT (NULL);"
    }
 
+
   write(request)
 
   local res = read()
-  if not res then error("Connection closed") end
+  if not res then error("Unable to connecto to:",options.host..':'..options.port) end
  
   
   request = {
@@ -202,7 +199,7 @@ function exports.execute(query, options)
       concat(query)
    }
 
-   p(request)
+
 
   write(request)
   
