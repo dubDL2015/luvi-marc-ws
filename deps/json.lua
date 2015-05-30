@@ -1,16 +1,5 @@
 exports.name = "luvit/json"
-exports.version = "2.5.0"
-exports.homepage = "http://dkolf.de/src/dkjson-lua.fsl"
-exports.description = "David Kolf's JSON library repackaged for lit."
-exports.tags = {"json", "codec"}
-exports.license = "MIT"
-exports.author = {
-  name = "David Kolf",
-  homepage = "http://dkolf.de/",
-}
-exports.contributors = {
-  "Tim Caswell",
-}
+exports.version = "1.0.0"
 
 -- Module options:
 local always_try_using_lpeg = false

@@ -18,6 +18,17 @@ p("load app with config:",conf)
 p("for first test: curl -L http://127.0.0.1:8080/knowledges/patent/")
 
 
+local function auth(req)
+  local token = req.headers["M-API-TOKEN"]
+  if not token then
+       --todo proper http response
+    error("unauthorized")
+    return false
+  end
+  return true
+end
+
+
 require('weblit-app')
 
   .bind({host = "0.0.0.0", port = env.get("PORT") or 8080})
@@ -30,7 +41,7 @@ require('weblit-app')
 
   .use(static(pathJoin(module.dir, "static")))
 
-  
+   --TODO chain  
 
   --[[
     token protected area TODO
@@ -48,10 +59,14 @@ require('weblit-app')
 
   .route({ method = "GET", path = "/knowledges/:knw_name/" }, mclient.getProperties)
   .route({ method = "GET", path = "/knowledges/:knw_name/resources/" }, mclient.getResources)
+.use(
+    function (req, res, go)
+      p("here")
 
+    end)
  
-
   .start()
+
 
 require('uv').run()
 

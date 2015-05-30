@@ -1,11 +1,10 @@
 local mconnector = require('mconnector')
 local jsonStringify = require('cjson').encode
 
-local url_parse = require('querystring').parse
-local SERVER = require('marc_api_V1').SERVER
-local CONTEXTS = require('marc_api_V1').CONTEXTS
-local RESULTS = require('marc_api_V1').RESULTS
-local SESSION = require('marc_api_V1').SESSION
+local SERVER = require('mapiV1').SERVER
+local CONTEXTS = require('mapiV1').CONTEXTS
+local RESULTS = require('mapiV1').RESULTS
+local SESSION = require('mapiV1').SESSION
 
 local mclient = {}
 
@@ -53,18 +52,18 @@ local function exec(req, res, go)
 
   local mresult = mconnector.execute(req.mquery, server)
 
-
+  --we take by default the last resultset
   local tosend = mresult.resultset[#mresult.resultset]
   
   local body = jsonStringify(tosend)
   --local body = table.concat(mresult)
 
-    res.headers = {
-      { 'Content-Type', 'application/json' },
-      { 'Content-Length', #body }
-    }
-    res.code = 200
-    res.body = body
+  res.headers = {
+    { 'Content-Type', 'application/json' },
+    { 'Content-Length', #body }
+  }
+  res.code = 200
+  res.body = body
 
 end
 
@@ -83,16 +82,27 @@ end
 
 
 function mclient.getResources(req, res, go)
-  --will be available later directly in weblit-app
-  local uri_params = url_parse(req.path,"?&","=")
-  if not uri_params then
-  end
-  local range = uri_params.range or 20
-  local offset = uri_params.offset or 1
+   local q = req.query
+  if not q then 
+    local reason = "empty query"
+      res.headers = {
+        ["Content-Type"] = "text/plain",
+        ["Content-Length"] = #reason
+      }
+    
+      res.code = 400
+      res.body = reason
+    return
+
+  end --TODO send appropriate header
+
+
+  local range = q["range"] or 20
+  local offset = q["offset"] or 1
 
   req.mquery = {
     CONTEXTS.CLEAR(),
-    SESSION.StringToContext(uri_params.search),
+    SESSION.StringToContext(q["search"]),
     RESULTS.CLEAR(),
     SESSION.ContextToDoc(),
     RESULTS.SET("FORMAT", "rowId title Act"),
