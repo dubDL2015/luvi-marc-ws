@@ -40,6 +40,7 @@ end
 local function decode_columns_header(data, pos, nb_cols)
   --columns definition
     local cols = {}
+
   
     for i = 1, nb_cols do
       local  _, typeCol, length, name
@@ -50,6 +51,39 @@ local function decode_columns_header(data, pos, nb_cols)
     end
 
     return cols, pos
+end
+
+
+local function decode_datas2(data, currentpos, nbRows, cols)
+
+  local s, val,_ , row
+  local row_cursor, col_cursor = 1, 1
+
+  local res = {}
+
+  while true do
+    
+    s, currentpos, val = strfind(data, "<%d*%s?([^/>]+)", currentpos)
+    if not s then break end
+    if ( row_cursor == 1 ) then
+      row = {}
+      res[#res+1] = row
+    end
+    row[cols[col_cursor].name] = val
+    if (col_cursor == #cols) then
+        row_cursor = 1
+        col_cursor = 1
+      else
+        row_cursor = row_cursor + 1 
+        col_cursor = col_cursor + 1 
+    end
+    --all values are found
+    if col_cursor >= #cols and row_cursor >= nbRows then break end 
+  end
+  --in case where currentpos == nil means end of stream
+  if not currentpos then currentpos = #data end
+
+  return res, currentpos 
 end
 
 
@@ -80,7 +114,7 @@ local function decode_datas(data, pos, nbRows, cols)
 
     rs[i] = row
   end
-  p(rs)
+ -- p(rs)
   return rs, pos
 end
 
@@ -113,7 +147,7 @@ local function decoder(data)
 
     local cols
     cols, pos = decode_columns_header(data, pos, nb_cols)
-    rs.data , pos = decode_datas(data, pos, nb_rows, cols)
+    rs.data , pos = decode_datas2(data, pos, nb_rows, cols)
 
     resultset[#resultset + 1] = rs
     

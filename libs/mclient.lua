@@ -11,6 +11,7 @@ local mclient = {}
 local servers  --will be loaded at run time via config file
 
 function mclient.setConfig(conf)
+  --TEST syntax and availability of servers  
   servers = conf.servers
  end
 
@@ -18,7 +19,7 @@ function mclient.setConfig(conf)
 --local uri = { host = "127.0.0.1", port = 1254 }
 
 
-local function exec(req, res, go)
+local function exec(mquery, req, res)
 
 
 
@@ -37,7 +38,7 @@ local function exec(req, res, go)
     return
   end
 
-  if not req.mquery then 
+  if not mquery then 
     
     local reason = "empty query"
       res.headers = {
@@ -50,7 +51,7 @@ local function exec(req, res, go)
     return
   end
 
-  local mresult = mconnector.execute(req.mquery, server)
+  local mresult = mconnector.execute(mquery, server)
 
   --we take by default the last resultset
   local tosend = mresult.resultset[#mresult.resultset]
@@ -72,11 +73,11 @@ end
 
 function mclient.getProperties(req, res, go)
 
-  req.mquery = {
+  local mquery = {
     SERVER.getProperties()
   }
 
-  exec(req, res, go)
+  exec(mquery, req, res)
 	
 end
 
@@ -100,7 +101,7 @@ function mclient.getResources(req, res, go)
   local range = q["range"] or 20
   local offset = q["offset"] or 1
 
-  req.mquery = {
+  local mquery = {
     CONTEXTS.CLEAR(),
     SESSION.StringToContext(q["search"]),
     RESULTS.CLEAR(),
@@ -110,7 +111,7 @@ function mclient.getResources(req, res, go)
     
   }
  
-  exec(req, res, go)
+  exec(mquery,req, res)
 
 
 end

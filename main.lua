@@ -15,6 +15,8 @@ end
 mclient.setConfig(conf)
 
 p("load app with config:",conf)
+
+--TODO test server availability
 p("for first test: curl -L http://127.0.0.1:8080/knowledges/patent/")
 
 
